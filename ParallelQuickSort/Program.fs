@@ -39,41 +39,15 @@ let rec hquicksort list =
             return List.concat [smallerElements; [firstElem]; largerElements]
     }
 
-let rec hquicksortopt list =
-    job {
-        match list with
-        | [] -> return []
-        | firstElem :: otherElements ->
-            if list.Length < 10 then
-                let smallerElementsJob =  
-                    otherElements             
-                    |> List.filter (fun e -> e < firstElem) 
-                    |> hquicksortopt
-                
-                let largerElementsJob =      
-                    otherElements 
-                    |> List.filter (fun e -> e >= firstElem)
-                    |> hquicksortopt       
-                
-                let! smallerElements, largerElements = smallerElementsJob <*> largerElementsJob
-                return List.concat [smallerElements; [firstElem]; largerElements]
-            else
-                return quicksort list
-    }
-
-
 type Benchmarks() =
     let rnd = Random()
-    let list = List.init 1000 (fun _ -> rnd.Next(Int32.MinValue, Int32.MaxValue))
+    let list = List.init 10000 (fun _ -> rnd.Next(Int32.MinValue, Int32.MaxValue))
     
     [<Benchmark>]
     member __.Sequential() = quicksort list
 
     [<Benchmark>]
     member __.Hopac() = hquicksort list |> run
-
-    [<Benchmark>]
-    member __.HopacOpt() = hquicksortopt list |> run
 
 [<EntryPoint>]
 let main _ = 
