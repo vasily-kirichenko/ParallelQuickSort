@@ -25,19 +25,42 @@ let rec hquicksort list =
         match list with
         | [] -> return []
         | firstElem :: otherElements ->
-             let smallerElementsJob =  
-                 otherElements             
-                 |> List.filter (fun e -> e < firstElem) 
-                 |> hquicksort          
-             
-             let largerElementsJob =      
-                 otherElements 
-                 |> List.filter (fun e -> e >= firstElem)
-                 |> hquicksort          
-             
-             let! smallerElements, largerElements = smallerElementsJob <*> largerElementsJob
-             return List.concat [smallerElements; [firstElem]; largerElements]
+            let smallerElementsJob =  
+                otherElements             
+                |> List.filter (fun e -> e < firstElem) 
+                |> hquicksort          
+            
+            let largerElementsJob =      
+                otherElements 
+                |> List.filter (fun e -> e >= firstElem)
+                |> hquicksort          
+            
+            let! smallerElements, largerElements = smallerElementsJob <*> largerElementsJob
+            return List.concat [smallerElements; [firstElem]; largerElements]
     }
+
+let rec hquicksortopt list =
+    job {
+        match list with
+        | [] -> return []
+        | firstElem :: otherElements ->
+            if list.Length < 10 then
+                let smallerElementsJob =  
+                    otherElements             
+                    |> List.filter (fun e -> e < firstElem) 
+                    |> hquicksortopt
+                
+                let largerElementsJob =      
+                    otherElements 
+                    |> List.filter (fun e -> e >= firstElem)
+                    |> hquicksortopt       
+                
+                let! smallerElements, largerElements = smallerElementsJob <*> largerElementsJob
+                return List.concat [smallerElements; [firstElem]; largerElements]
+            else
+                return quicksort list
+    }
+
 
 type Benchmarks() =
     let rnd = Random()
@@ -48,6 +71,9 @@ type Benchmarks() =
 
     [<Benchmark>]
     member __.Hopac() = hquicksort list |> run
+
+    [<Benchmark>]
+    member __.HopacOpt() = hquicksortopt list |> run
 
 [<EntryPoint>]
 let main _ = 
